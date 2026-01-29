@@ -1,0 +1,33 @@
+{
+  "name": "diffscribe",
+  "version": "1.0.0",
+  "description": "AI-powered commit message generator for Conventional Commits",
+  "type": "module",
+  "bin": "./dist/index.js",
+  "files": ["dist"],
+  "exports": "./dist/index.js",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc && shx chmod +x dist/index.js",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "prepare": "npm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^12.1.0",
+    "execa": "^9.5.2",
+    "@inquirer/prompts": "^7.2.0",
+    "clipboardy": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "shx": "^0.3.4",
+    "typescript": "^5.7.2"
+  },
+  "keywords": ["git", "commit", "conventional-commits", "cli", "ai"],
+  "license": "MIT"
+}
