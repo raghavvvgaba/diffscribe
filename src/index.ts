@@ -5,12 +5,16 @@ import clipboardy from 'clipboardy';
 import { GitHelper } from './lib/git.js';
 import { output } from './lib/output.js';
 import { promptCommitStyle, promptAction, promptContinueRegeneration } from './cli/prompts.js';
+import { getOpenRouterConfig, DEFAULT_MODEL } from './lib/config.js';
+import { selectModel, generateCommitMessageWithLLM } from './lib/openrouter.js';
 import type { CommitStyle, CommitMessage } from './types.js';
 
 const program = new Command()
   .name('diffscribe')
   .description('AI-powered commit message generator')
-  .version('1.0.0');
+  .version('1.0.0')
+  .option('--model <model>', 'AI model to use (e.g., openai/gpt-4o-mini)', DEFAULT_MODEL)
+  .option('--mock', 'Use mock generation instead of LLM (for testing)');
 
 async function generateMockCommitMessage(style: CommitStyle, diff: string): Promise<CommitMessage> {
   const hasTest = diff.includes('test') || diff.includes('spec');
@@ -43,6 +47,23 @@ async function generateMockCommitMessage(style: CommitStyle, diff: string): Prom
   return { header };
 }
 
+function parseCommitMessage(llmOutput: string): CommitMessage {
+  const lines = llmOutput.split('\n').filter(line => line.trim() !== '');
+
+  if (lines.length === 0) {
+    return { header: 'chore: update code' };
+  }
+
+  const header = lines[0].trim();
+
+  if (lines.length === 1) {
+    return { header };
+  }
+
+  const bodyLines = lines.slice(1).join('\n');
+  return { header, body: bodyLines };
+}
+
 function displayCommitMessage(message: CommitMessage): void {
   output.header('Generated Commit Message');
   console.log(chalk.cyan(message.header));
@@ -56,8 +77,24 @@ function displayCommitMessage(message: CommitMessage): void {
 }
 
 async function main() {
+  const options = program.opts();
+  const useMock = options.mock;
+
   console.log(chalk.cyan.bold('diffscribe — AI-powered commit message generator\n'));
   output.info('Starting...\n');
+
+  if (!useMock) {
+    try {
+      getOpenRouterConfig();
+      output.dim(`Using model: ${options.model}\n`);
+    } catch (error: any) {
+      output.error(error.message);
+      output.dim('To use mock mode for testing, run: diffscribe --mock');
+      process.exit(1);
+    }
+  } else {
+    output.dim('Running in mock mode (no API calls)\n');
+  }
 
   const git = new GitHelper();
 
@@ -87,7 +124,21 @@ async function main() {
     attempt++;
     output.dim(`Generating commit message (attempt ${attempt})...`);
 
-    const message = await generateMockCommitMessage(style, diffResult.diff);
+    let message: CommitMessage;
+
+    if (useMock) {
+      message = await generateMockCommitMessage(style, diffResult.diff);
+    } else {
+      const result = await generateCommitMessageWithLLM(diffResult.diff, style);
+
+      if (!result.success || !result.message) {
+        output.error(result.error || 'Failed to generate commit message');
+        process.exit(1);
+      }
+
+      message = parseCommitMessage(result.message);
+    }
+
     displayCommitMessage(message);
 
     const action = await promptAction();
