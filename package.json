@@ -4,9 +4,7 @@
   "description": "AI-powered commit message generator for Conventional Commits",
   "type": "module",
   "bin": "./dist/index.js",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "exports": "./dist/index.js",
   "main": "./dist/index.js",
   "scripts": {
@@ -19,25 +17,19 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@inquirer/prompts": "^7.2.0",
-    "@openrouter/sdk": "^0.5.1",
     "chalk": "^5.4.1",
-    "clipboardy": "^4.0.0",
     "commander": "^12.1.0",
-    "dotenv": "^17.2.3",
-    "execa": "^9.5.2"
+    "execa": "^9.5.2",
+    "@inquirer/prompts": "^7.2.0",
+    "clipboardy": "^4.0.0",
+    "@openrouter/sdk": "^0.5.1",
+    "dotenv": "^17.2.3"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "shx": "^0.3.4",
     "typescript": "^5.7.2"
   },
-  "keywords": [
-    "git",
-    "commit",
-    "conventional-commits",
-    "cli",
-    "ai"
-  ],
+  "keywords": ["git", "commit", "conventional-commits", "cli", "ai"],
   "license": "MIT"
 }

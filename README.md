@@ -9,7 +9,7 @@ AI-powered commit message generator for Conventional Commits.
 - ✅ Preview before committing
 - ✅ Automatic clipboard copy
 - ✅ Regeneration loop
-- ✅ OpenRouter integration with multiple AI models
+- ✅ Smart model selection (free draft + paid refinement for long diffs)
 - ✅ Mock mode for testing
 - ✅ Error handling with clear messages
 
@@ -19,7 +19,7 @@ AI-powered commit message generator for Conventional Commits.
 2. Generates a Conventional Commit message using AI
 3. Preview and accept/reject
 4. Copies to clipboard on accept
-5. Run `git commit` and paste the message
+5. Run `git commit` and paste message
 
 ## Installation
 
@@ -53,8 +53,6 @@ source ~/.bashrc
 echo $OPENROUTER_API_KEY
 ```
 
-See [OPENROUTER_SETUP.md](./OPENROUTER_SETUP.md) for detailed configuration.
-
 ## Usage
 
 ### Basic Usage
@@ -67,12 +65,6 @@ git add .
 npx diffscribe
 ```
 
-### Use Specific Model
-
-```bash
-npx diffscribe --model openai/gpt-4o
-```
-
 ### Mock Mode (Testing)
 
 For testing without API calls:
@@ -81,22 +73,25 @@ For testing without API calls:
 npx diffscribe --mock
 ```
 
-### Available Models
+## Model Strategy
 
-| Model | Description | Pricing |
-|--------|-------------|----------|
-| `openai/gpt-4o-mini` | Fast, affordable, great for commit messages | ~$0.15/1M tokens |
-| `openai/gpt-4o` | Premium quality, higher cost | ~$2.50/1M tokens |
-| `deepseek/deepseek-chat` | Excellent coding capabilities, very affordable | ~$0.14/1M tokens |
-| `meta-llama/llama-3.1-8b-instruct:free` | Free model, good for simple commits | FREE |
-| `anthropic/claude-3.5-sonnet` | Best quality, higher cost | ~$3.00/1M tokens |
+The tool uses a smart two-stage approach for optimal cost and quality:
+
+### Draft Stage (Free Models)
+- **Primary**: `mistralai/devstral-2512:free` — Fast free model for initial commit message
+- **Backup**: `qwen/qwen3-coder:free` — Falls back if primary hits rate limits
+
+### Refinement Stage (Paid Model)
+- **Refinement**: `google/gemini-2.5-flash-lite` — Polishes messages for large diffs (300+ lines or 12KB+)
+
+### When Does Refinement Run?
+Only for larger changes to improve clarity and structure. Smaller diffs skip refinement to save cost.
 
 ## Options
 
 ```
 Options:
   -V, --version          output the version number
-  --model <model>       AI model to use (default: "openai/gpt-4o-mini")
   --mock                Use mock generation instead of LLM (for testing)
   -h, --help           display help for command
 ```

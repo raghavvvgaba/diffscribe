@@ -1,5 +1,6 @@
+// User interaction prompts and CLI flow
 import { select, confirm } from '@inquirer/prompts';
-import type { CommitStyle } from '../types.js';
+import type { CommitStyle } from './config.js';
 
 export async function promptCommitStyle(): Promise<CommitStyle> {
   const choices = [

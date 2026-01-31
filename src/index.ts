@@ -1,19 +1,15 @@
 #!/usr/bin/env node
-import { Command } from 'commander';
 import chalk from 'chalk';
-import clipboardy from 'clipboardy';
-import { GitHelper } from './lib/git.js';
-import { output } from './lib/output.js';
-import { promptCommitStyle, promptAction, promptContinueRegeneration } from './cli/prompts.js';
-import { getOpenRouterConfig, DEFAULT_MODEL } from './lib/config.js';
-import { selectModel, generateCommitMessageWithLLM } from './lib/openrouter.js';
-import type { CommitStyle, CommitMessage } from './types.js';
+import { Command } from 'commander';
+import { GitHelper } from './git.js';
+import { CommitService } from './service.js';
+import { promptCommitStyle, promptAction, promptContinueRegeneration } from './ui.js';
+import { getOpenRouterConfig, DRAFT_MODEL_PRIMARY, DRAFT_MODEL_BACKUP, REFINEMENT_MODEL, CommitMessage, CommitStyle } from './config.js';
 
 const program = new Command()
   .name('diffscribe')
   .description('AI-powered commit message generator')
   .version('1.0.0')
-  .option('--model <model>', 'AI model to use (e.g., openai/gpt-4o-mini)', DEFAULT_MODEL)
   .option('--mock', 'Use mock generation instead of LLM (for testing)');
 
 async function generateMockCommitMessage(style: CommitStyle, diff: string): Promise<CommitMessage> {
@@ -47,125 +43,87 @@ async function generateMockCommitMessage(style: CommitStyle, diff: string): Prom
   return { header };
 }
 
-function parseCommitMessage(llmOutput: string): CommitMessage {
-  const lines = llmOutput.split('\n').filter(line => line.trim() !== '');
-
-  if (lines.length === 0) {
-    return { header: 'chore: update code' };
-  }
-
-  const header = lines[0].trim();
-
-  if (lines.length === 1) {
-    return { header };
-  }
-
-  const bodyLines = lines.slice(1).join('\n');
-  return { header, body: bodyLines };
-}
-
-function displayCommitMessage(message: CommitMessage): void {
-  output.header('Generated Commit Message');
-  console.log(chalk.cyan(message.header));
-
-  if (message.body) {
-    console.log();
-    console.log(chalk.dim(message.body));
-  }
-
-  output.divider();
-}
-
 async function main() {
   const options = program.opts();
   const useMock = options.mock;
 
   console.log(chalk.cyan.bold('diffscribe — AI-powered commit message generator\n'));
-  output.info('Starting...\n');
+  console.log(chalk.blue('ℹ Starting...\n'));
 
   if (!useMock) {
     try {
       getOpenRouterConfig();
-      output.dim(`Using model: ${options.model}\n`);
+      console.log(chalk.dim(`Draft model: ${DRAFT_MODEL_PRIMARY} (backup: ${DRAFT_MODEL_BACKUP})`));
+      console.log(chalk.dim(`Refinement model: ${REFINEMENT_MODEL}\n`));
     } catch (error: any) {
-      output.error(error.message);
-      output.dim('To use mock mode for testing, run: diffscribe --mock');
+      console.error(`${chalk.bold.red('✖')} ${error.message}`);
+      console.log(chalk.dim('To use mock mode for testing, run: diffscribe --mock'));
       process.exit(1);
     }
   } else {
-    output.dim('Running in mock mode (no API calls)\n');
+    console.log(chalk.dim('Running in mock mode (no API calls)\n'));
   }
 
   const git = new GitHelper();
 
   if (!(await git.isInGitRepo())) {
-    output.error('Not a Git repository.');
-    output.dim('Run diffscribe inside a Git project.');
+    console.error(`${chalk.bold.red('✖')} Not a Git repository.`);
+    console.log(chalk.dim('Run diffscribe inside a Git project.'));
     process.exit(1);
   }
 
   const diffResult = await git.getStagedDiff();
 
   if (!diffResult.success || !diffResult.diff) {
-    output.error(diffResult.error || 'No staged changes found.');
-    output.dim('Stage files using `git add` before running diffscribe.');
+    console.error(`${chalk.bold.red('✖')} ${diffResult.error || 'No staged changes found.'}`);
+    console.log(chalk.dim('Stage files using `git add` before running diffscribe.'));
     process.exit(1);
   }
 
-  output.success(`Found staged changes (${diffResult.diff.split('\n').length} lines)`);
+  console.log(`${chalk.bold.green('✓')} Found staged changes (${diffResult.diff.split('\n').length} lines)`);
 
   const style = await promptCommitStyle();
-  output.info(`Selected style: ${style}\n`);
+  console.log(chalk.blue(`ℹ Selected style: ${style}\n`));
 
   let shouldContinue = true;
   let attempt = 0;
 
+  const service = new CommitService();
+
   while (shouldContinue) {
     attempt++;
-    output.dim(`Generating commit message (attempt ${attempt})...`);
+    console.log(chalk.dim(`Generating commit message (attempt ${attempt})...`));
 
     let message: CommitMessage;
 
     if (useMock) {
       message = await generateMockCommitMessage(style, diffResult.diff);
+      service.displayCommitMessage(message);
     } else {
-      const result = await generateCommitMessageWithLLM(diffResult.diff, style);
+      const result = await service.generateCommitMessageWithLLM(diffResult.diff, style);
 
       if (!result.success || !result.message) {
-        output.error(result.error || 'Failed to generate commit message');
+        console.error(`${chalk.bold.red('✖')} ${result.error || 'Failed to generate commit message'}`);
         process.exit(1);
       }
 
-      message = parseCommitMessage(result.message);
+      message = service.parseCommitMessage(result.message);
+      service.displayCommitMessage(message, result.model);
     }
-
-    displayCommitMessage(message);
 
     const action = await promptAction();
 
     if (action === 'accept') {
-      try {
-        const fullMessage = message.body ? `${message.header}\n\n${message.body}` : message.header;
-        await clipboardy.write(fullMessage);
-        output.success('Commit message copied to clipboard!');
-        output.info('Run `git commit` and paste the message.');
-        process.exit(0);
-      } catch (error) {
-        output.error('Failed to copy to clipboard');
-        console.log(chalk.cyan(message.header));
-        if (message.body) {
-          console.log();
-          console.log(chalk.dim(message.body));
-        }
-        process.exit(1);
-      }
+      await service.copyCommitMessage(message);
+      console.log(chalk.blue('ℹ Run `git commit` and paste the message.'));
+      process.exit(0);
     } else if (action === 'reject') {
-      output.info('Cancelled.');
+      console.log(chalk.blue('ℹ Cancelled.'));
       process.exit(0);
     } else if (action === 'regenerate') {
       shouldContinue = await promptContinueRegeneration();
       if (!shouldContinue) {
-        output.info('Cancelled.');
+        console.log(chalk.blue('ℹ Cancelled.'));
         process.exit(0);
       }
     }
@@ -174,7 +132,7 @@ async function main() {
 
 program.action(() => {
   main().catch((error) => {
-    output.error(error.message);
+    console.error(`${chalk.bold.red('✖')} ${error.message}`);
     process.exit(1);
   });
 });

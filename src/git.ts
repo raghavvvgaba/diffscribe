@@ -1,5 +1,6 @@
+// Git operations and repository management
 import { execa } from 'execa';
-import type { GitResult } from '../types.js';
+import type { GitResult } from './config.js';
 
 export class GitHelper {
   private cwd?: string;
