@@ -136,14 +136,14 @@ Only add bullet points if there are meaningful details to explain.`
 Format Options (choose dynamically based on diff complexity):
 
 SIMPLE FORMAT (for straightforward changes):
-<type>(<scope>): <description>
+<type>(<scope>): 
 
 - Bullet point 1
 - Bullet point 2
 - Bullet point 3
 
 STRUCTURED FORMAT (for complex changes with multiple aspects):
-<type>(<scope>): <description>
+<type>(<scope>): 
 
 <Section Title>:
 - Bullet point
@@ -153,7 +153,7 @@ STRUCTURED FORMAT (for complex changes with multiple aspects):
 - Bullet point
 - Bullet point
 
-[Optional footer for pending work, breaking changes, etc.]
+[Optional footer for breaking changes, etc.]
 
 Use structured format when changes involve:
 - Multiple features/aspects
