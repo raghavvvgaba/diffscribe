@@ -5,12 +5,22 @@ import { GitHelper } from './git.js';
 import { CommitService } from './service.js';
 import { promptCommitStyle, promptAction, promptContinueRegeneration } from './ui.js';
 import { getOpenRouterConfig, DRAFT_MODEL_PRIMARY, DRAFT_MODEL_BACKUP, REFINEMENT_MODEL, CommitMessage, CommitStyle } from './config.js';
+import { setApiKey } from './auth.js';
 
 const program = new Command()
   .name('diffscribe')
   .description('AI-powered commit message generator')
   .version('1.0.0')
   .option('--mock', 'Use mock generation instead of LLM (for testing)');
+
+program
+  .command('auth')
+  .description('Manage API key configuration')
+  .addCommand(
+    new Command('set')
+      .description('Store your OpenRouter API key')
+      .action(setApiKey)
+  );
 
 async function generateMockCommitMessage(style: CommitStyle, diff: string): Promise<CommitMessage> {
   const hasTest = diff.includes('test') || diff.includes('spec');
