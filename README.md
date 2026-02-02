@@ -23,7 +23,19 @@ AI-powered commit message generator for Conventional Commits.
 
 ## Installation
 
-Zero-install via npx:
+### Global Installation (Recommended)
+
+```bash
+npm install -g diffscribe
+```
+
+After installation, you can run the `dcs` command from anywhere:
+
+```bash
+dcs        # If installed globally
+```
+
+### Zero-install via npx
 
 ```bash
 npx diffscribe
@@ -61,7 +73,10 @@ echo $OPENROUTER_API_KEY
 # Stage your changes
 git add .
 
-# Generate commit message
+# Generate commit message (if installed globally)
+dcs
+
+# Or using npx
 npx diffscribe
 ```
 
@@ -70,7 +85,8 @@ npx diffscribe
 For testing without API calls:
 
 ```bash
-npx diffscribe --mock
+dcs --mock          # If installed globally
+npx diffscribe --mock  # Using npx
 ```
 
 ## Model Strategy
@@ -90,10 +106,32 @@ Only for larger changes to improve clarity and structure. Smaller diffs skip ref
 ## Options
 
 ```
+### dcs
+
+Generate AI-powered commit messages for your staged changes.
+
+```bash
+dcs [options]
+```
+
 Options:
   -V, --version          output the version number
   --mock                Use mock generation instead of LLM (for testing)
   -h, --help           display help for command
+
+### Examples
+
+```bash
+# Generate commit message with AI
+dcs
+
+# Test without API calls
+dcs --mock
+
+# Using npx (no installation needed)
+npx diffscribe
+npx diffscribe --mock
+```
 ```
 
 ## Requirements

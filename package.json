@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "description": "AI-powered commit message generator for Conventional Commits",
   "type": "module",
-  "bin": "./dist/index.js",
-  "files": ["dist"],
+  "bin": {
+    "dcs": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
   "exports": "./dist/index.js",
   "main": "./dist/index.js",
   "scripts": {
@@ -17,19 +21,40 @@
     "node": ">=20"
   },
   "dependencies": {
-    "chalk": "^5.4.1",
-    "commander": "^12.1.0",
-    "execa": "^9.5.2",
     "@inquirer/prompts": "^7.2.0",
-    "clipboardy": "^4.0.0",
     "@openrouter/sdk": "^0.5.1",
-    "dotenv": "^17.2.3"
+    "chalk": "^5.4.1",
+    "clipboardy": "^4.0.0",
+    "commander": "^12.1.0",
+    "dotenv": "^17.2.3",
+    "execa": "^9.5.2"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "shx": "^0.3.4",
     "typescript": "^5.7.2"
   },
-  "keywords": ["git", "commit", "conventional-commits", "cli", "ai"],
+  "keywords": [
+    "git",
+    "commit",
+    "conventional-commits",
+    "cli",
+    "ai",
+    "diffscribe",
+    "dcs"
+  ],
+  "preferGlobal": true,
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/raghavvvgaba/diffscribe.git"
+  },
+  "author": "Raghav Gaba <raghav@example.com>",
+  "bugs": {
+    "url": "https://github.com/raghavvvgaba/diffscribe/issues"
+  },
+  "homepage": "https://github.com/raghavvvgaba/diffscribe#readme",
   "license": "MIT"
 }

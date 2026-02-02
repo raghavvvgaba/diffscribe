@@ -26,11 +26,11 @@ export interface OpenRouterConfig {
   siteName?: string;
 }
 
-export const DRAFT_MODEL_PRIMARY = 'mistralai/devstral-2512:free';
+export const DRAFT_MODEL_PRIMARY = 'google/gemini-2.5-flash-lite';
 
-export const DRAFT_MODEL_BACKUP = 'qwen/qwen3-coder:free';
+export const DRAFT_MODEL_BACKUP = 'mistralai/devstral-2512';
 
-export const REFINEMENT_MODEL = 'google/gemini-2.5-flash-lite';
+export const REFINEMENT_MODEL = 'google/gemini-2.5-flash';
 
 export function getOpenRouterConfig(): OpenRouterConfig {
   const apiKey = process.env.OPENROUTER_API_KEY;
