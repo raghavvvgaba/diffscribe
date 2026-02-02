@@ -123,8 +123,44 @@ async function generateCommitMessage(
   useFallback: boolean
 ): Promise<CommitMessageGenerationResult> {
   const styleInstruction = style === 'concise'
-    ? 'Return ONLY a single-line commit message in Conventional Commits format: <type>(<scope>): <description>'
-    : 'Return a commit message in Conventional Commits format with:\n- Header: <type>(<scope>): <description>\n- Body: 2-3 bullet points explaining what was changed and why';
+    ? `Return a concise commit message in Conventional Commits format:
+
+<type>(<scope>): <description>
+
+- Bullet point 1
+
+Use 1-4 bullet points dynamically based on the number of changes.
+Only add bullet points if there are meaningful details to explain.`
+    : `Return a detailed commit message in Conventional Commits format.
+
+Format Options (choose dynamically based on diff complexity):
+
+SIMPLE FORMAT (for straightforward changes):
+<type>(<scope>): <description>
+
+- Bullet point 1
+- Bullet point 2
+- Bullet point 3
+
+STRUCTURED FORMAT (for complex changes with multiple aspects):
+<type>(<scope>): <description>
+
+<Section Title>:
+- Bullet point
+- Bullet point
+
+<Section Title>:
+- Bullet point
+- Bullet point
+
+[Optional footer for pending work, breaking changes, etc.]
+
+Use structured format when changes involve:
+- Multiple features/aspects
+- Different technical areas
+- Implementation details + user impact
+- Complex refactoring
+Use simple format for focused, single-aspect changes.`;
 
   const systemPrompt = `You are an expert developer who writes perfect Conventional Commits.
 Your task is to analyze git diffs and generate clear, meaningful commit messages.
@@ -135,7 +171,69 @@ Rules:
 - Description must be in imperative mood (e.g., "add" not "added" or "adds")
 - Keep header under 72 characters
 - No period at the end of header
-- Focus on WHAT and WHY, not HOW`;
+- Focus on WHAT and WHY, not HOW
+
+Section Guidelines:
+- Create logical sections based on the diff content
+- Common section titles: Core Features, Changes, Technical, Implementation, Breaking Changes
+- Use clear, descriptive section names
+- Group related changes together
+- Each section should have 4-5 bullet points maximum
+- Each bullet should be a complete thought
+
+EXAMPLES:
+
+Simple Format Example:
+feat(auth): implement OAuth login flow
+
+- Add Google OAuth integration
+- Update auth controller to handle OAuth callbacks
+- Add OAuth configuration to environment variables
+
+Structured Format Example:
+feat(notes): implement note creation, reading, deletion with tag system
+
+Core Features:
+- Create notes with tag assignments
+- Read and filter notes by tags
+- Delete notes with UI confirmation
+
+Tag System:
+- Add multiple tags to notes
+- Filter notes by tags
+- Tag management interface
+- Tag-based organization
+
+Technical:
+- Appwrite database integration
+- Real-time note listing
+- Tag filtering functionality
+- Responsive UI design
+
+Pending: Update functionality for existing notes
+
+Fix Example:
+fix(api): resolve null pointer in user authentication
+
+Issue: Login fails when user has no profile image
+- Add null check for profile images
+- Update auth middleware to handle missing profiles
+- Add error logging for authentication failures
+
+Refactor Example:
+refactor(core): migrate from Redux to Zustand
+
+Migration:
+- Replace Redux store with Zustand
+- Update all state selectors
+- Remove Redux middleware
+- Migrate async actions to Zustand
+
+Benefits:
+- Smaller bundle size (reduced by 200KB)
+- Simpler state management
+- Better TypeScript support
+- Improved developer experience`;
 
   const userPrompt = `${styleInstruction}\n\nGit Diff:\n\`\`\`diff\n${diff}\n\`\`\``;
 
